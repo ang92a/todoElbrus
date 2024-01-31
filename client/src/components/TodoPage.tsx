@@ -1,32 +1,20 @@
-import React, { useState } from 'react';
+import React, { useState, useContext } from 'react';
 import './TodoPage.css';
-import type { TodoTypeObj } from '../type';
 import TodoItem from './TodoItem';
+import { appContext } from '../contextTodo';
+import type { TodoTypeObj } from '../type';
 
-const TodoPage = ({
-  onHandleAddToDo,
-  onHandleRemoveToDo,
-  todo,
-  setTodo,
-  // setIsChecked,
-  // isChecked,
-}: {
-  onHandleAddToDo: (value: TodoTypeObj) => void;
-  onHandleRemoveToDo: (value: TodoTypeObj) => void;
-  todo: TodoTypeObj[];
-  setTodo: (value: TodoTypeObj[]) => void;
-  // setIsChecked: (value: boolean) => void;
-  // isChecked: boolean;
-}): JSX.Element => {
-  //интпут
+const TodoPage = (): JSX.Element => {
+  // интпут
   const [valueInput, setValueInput] = useState<string>('');
 
-  // функция которая достает мз инпутов значение, а затем передает это значение в функцию
-  const onHandleAddToDoServer: React.FormEventHandler<HTMLFormElement> = async (
-    e,
-  ): Promise<void> => {
+  // из контекста достаем массив с данными
+  const { dispatch } = useContext(appContext);
+  const { state } = useContext(appContext);
+
+  const onHandleAddToDoServer: React.FormEventHandler<HTMLFormElement> = (e): void => {
     e.preventDefault();
-    const res = await fetch('/api/todo', {
+    fetch('/api/todo', {
       method: 'POST',
       headers: {
         'Content-type': 'application/json',
@@ -35,10 +23,13 @@ const TodoPage = ({
         description: valueInput,
         check: false,
       }),
-    });
-    const data: { todo: TodoTypeObj } = (await res.json()) as { todo: TodoTypeObj };
-    // функция которая добавляет на страницу добавленный обьект
-    onHandleAddToDo(data.todoItem);
+    })
+      .then((res) => res.json())
+      .then((data: { todoItem: TodoTypeObj }) => {
+        console.log(data.todoItem);
+        dispatch({ type: 'add/todo', payload: data.todoItem });
+      })
+      .catch(console.log);
   };
 
   return (
@@ -48,17 +39,12 @@ const TodoPage = ({
         <form action="" className="form" onSubmit={onHandleAddToDoServer}>
           <div className="add-btn">
             <input value={valueInput} type="text" onChange={(e) => setValueInput(e.target.value)} />
-            <button type="text">Add</button>
+            <button type="submit">Add</button>
           </div>
         </form>
         <div className="todoList">
-          {todo.map((item) => (
-            <TodoItem
-              key={item.id}
-              item={item}
-              onHandleRemoveToDo={onHandleRemoveToDo}
-              setTodo={setTodo}
-            />
+          {state.todo.map((item) => (
+            <TodoItem key={item.id} item={item} />
           ))}
         </div>
       </div>

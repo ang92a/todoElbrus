@@ -13,6 +13,7 @@ router.get('/', async (req, res) => {
 
 router.post('/todo', async (req, res) => {
   try {
+    console.log(req.body);
     const { description, check } = req.body;
     const todoItem = await todo.create({
       description,
@@ -41,8 +42,9 @@ router.put('/todo/:params', async (req, res) => {
 router.delete('/:params', async (req, res) => {
   console.log(123);
   const { params } = req.params;
+  const obj = await todo.findOne({ where: { id: params } });
   await todo.destroy({ where: { id: params } });
-  res.json({ message: 'success' });
+  res.json({ message: 'success', obj });
 });
 
 module.exports = router;

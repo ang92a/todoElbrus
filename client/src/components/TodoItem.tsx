@@ -1,18 +1,22 @@
-import React, { useState } from 'react';
+import React, { useContext } from 'react';
 import type { TodoTypeObj } from '../type';
 import './TodoPage.css';
+import { appContext } from '../contextTodo';
 
-const TodoItem = ({
-  item,
-  onHandleRemoveToDo,
-  setTodo,
-}: {
-  item: TodoTypeObj;
-  onHandleRemoveToDo: (value: TodoTypeObj) => void;
-  setTodo: (value: TodoTypeObj[]) => void;
-}) => {
-  //функция которая меняет чекбокс
-  const onHandleCheckboxChange = () => {
+const TodoItem = ({ item }: { item: TodoTypeObj }): JSX.Element => {
+  const { dispatch } = useContext(appContext);
+
+  const onHandleRemoveToDo = (value: TodoTypeObj): void => {
+    fetch(`/api/${value.id}`, {
+      method: 'Delete',
+    })
+      .then((res) => res.json())
+      .then((data: { obj: TodoTypeObj }) => dispatch({ type: 'delete/todo', payload: data.obj }))
+      .catch(console.log);
+  };
+
+  // функция которая меняет чекбокс
+  const onHandleCheckboxChange = (): void => {
     // Отправка запроса на сервер для обновления состояния задачи
     fetch(`/api/todo/${item.id}`, {
       method: 'put',
@@ -24,21 +28,19 @@ const TodoItem = ({
       }),
     })
       .then((res) => res.json())
-      .then((data) => {
-        setTodo((prev) =>
-          [...prev].map((el) => (el.id === data.resObj.id ? { ...el, check: !el.check } : el)),
-        );
+      .then((data: { resObj: TodoTypeObj }) => {
+        dispatch({ type: 'put/todo', payload: data.resObj });
       })
-      .catch((error) => {
-        console.error('Error updating todo:', error);
-      });
+      .catch(console.log);
   };
 
   return (
     <div className="task">
       <input type="checkbox" checked={item.check} onChange={onHandleCheckboxChange} />
       {item.check ? <s>{item.description}</s> : <p>{item.description}</p>}
-      <button onClick={() => onHandleRemoveToDo(item)}>удалить</button>
+      <button type="button" onClick={() => onHandleRemoveToDo(item)}>
+        удалить
+      </button>
       <br />
     </div>
   );
